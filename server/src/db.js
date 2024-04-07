@@ -1,19 +1,28 @@
 require ("dotenv").config();
 
 const { Sequelize } = require("sequelize");
-const { DB_USER,_DB_PASSWORD,_DB_HOST } = process.env;
-const Table1 = require("./models/Table1");
-const Table2 = require("./models/Table2");
+const { DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, BDD } = process.env;
+const AppointmentsModel = require("./models/Appointments");
+const UsersModel = require("./models/Users");
 
-const Sequelize = new Sequelize(
-    `postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/template`
+
+
+const database = new Sequelize(
+    `postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${BDD}`,
+    { logging: false }
 );
 
-Table1(sequelize);
-Table2(sequelize);
+//Pasando el argumento database, a las funciones que definen los modelos
+AppointmentsModel(database);
+UsersModel(database);
 
+//Relaciones de las tablas
+const { Appointments, Users } = database.models;
+
+Appointments.belongsToMany(Users, { through: "UsersAppointments" });
+Users.belongsToMany(Appointments, { through: "UsersAppointments" });
 
 module.exports = {
-    Table1,
-    Table2,    
-}
+    database,
+...database.models,
+};
